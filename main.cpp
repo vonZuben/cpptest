@@ -4,7 +4,7 @@
 #include<cstring>
 #include<algorithm>
 
-#define MEMSIZE 100000
+#define MEMSIZE 4096/4
 
 using namespace std;
 
@@ -17,8 +17,8 @@ void timeit(string testname, T f){
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << testname << ": Time "
-              << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
-              << "us.\n";
+              << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()
+              << "ns.\n";
 }
 
 int main(int argc, char **argv){
@@ -43,6 +43,15 @@ int main(int argc, char **argv){
             int d[MEMSIZE];
 
             memcpy(d, p, MEMSIZE*sizeof(int));
+
+    });
+    
+    timeit("memmove", [](){
+
+            int p[MEMSIZE] = {0};
+            int d[MEMSIZE];
+
+            memmove(d, p, MEMSIZE*sizeof(int));
 
     });
 
