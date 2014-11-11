@@ -7,14 +7,12 @@
 
 #define MEMSIZE 4096/4
 
-using namespace std;
-
 template <typename T, typename... args>
-void timeit(string testname, T f, args&&... a){
+void timeit(std::string testname, T f, args&&... a){
 
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
-    f(forward<args>(a)...);
+    f(std::forward<args>(a)...);
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << testname << ": Time "
@@ -24,8 +22,8 @@ void timeit(string testname, T f, args&&... a){
 
 int main(int argc, char **argv){
 
-    cout << "MEMSIZE (num double): " << MEMSIZE << '\n';
-    cout << "size of double: " << sizeof(double) << '\n';
+    std::cout << "MEMSIZE (num double): " << MEMSIZE << '\n';
+    std::cout << "size of double: " << sizeof(double) << '\n';
 
     double hello; // this is not for testing performance, but testing template stuff
 
@@ -92,11 +90,11 @@ int main(int argc, char **argv){
 
             double d[MEMSIZE];
 
-            copy(buf, &buf[MEMSIZE], d);
+            std::copy(buf, &buf[MEMSIZE], d);
 
     });
 
 
-    cout << hello << '\n';
+    std::cout << hello << '\n';
     return 0;
 }
