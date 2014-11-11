@@ -3,17 +3,18 @@
 #include<string>
 #include<cstring>
 #include<algorithm>
+#include<cstdlib>
 
 #define MEMSIZE 4096/4
 
 using namespace std;
 
-template <typename T>
-void timeit(string testname, T f){
+template <typename T, typename... args>
+void timeit(string testname, T f, args&&... a){
 
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
-    f();
+    f(forward<args>(a)...);
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << testname << ": Time "
@@ -23,44 +24,75 @@ void timeit(string testname, T f){
 
 int main(int argc, char **argv){
 
-    cout << "MEMSIZE (num int): " << MEMSIZE << "\n";
+    cout << "MEMSIZE (num double): " << MEMSIZE << '\n';
+    cout << "size of double: " << sizeof(double) << '\n';
 
-    int hello;
+    double hello; // this is not for testing performance, but testing template stuff
 
-    timeit("Heap alloc", [&](){
+    timeit("Heap alloc 1", [](double *hello){
 
-            int *p = new int[MEMSIZE];
+            double *p = new double[MEMSIZE];
 
-            hello = 99;
+            *hello = 99;
+
+            delete[]p;
+
+    }, &hello);
+
+    // this test shows that the first malloc for the data section is the most expensive because of the system call,
+    // but after freeing it, if we need the memory again than it is alrady held by the internal new/delete memory allocator
+    // and is obtainable with out system call. for both heap and stack memory cases
+
+    timeit("Heap alloc 2", [](){ 
+
+            double *p = new double[MEMSIZE];
 
             delete[]p;
 
     });
 
-    timeit("memcopy", [](){
 
-            int p[MEMSIZE] = {0};
-            int d[MEMSIZE];
+    double buf[MEMSIZE];
 
-            memcpy(d, p, MEMSIZE*sizeof(int));
+    srand(3);
+
+    for (auto &x : buf){ // this isnt working p is all 0's evan after loop
+        x = static_cast<double>(rand())/static_cast<double>(RAND_MAX);
+    }
+
+    // big problem, all these tests are affected by the first one. everything after goes faster even after changeing the
+    // content of buf befor each copy, I think it is because stack memory is malloc'ed for the first one and that memory is still held
+    // by the program, allowing copying to be faster.
+    
+    timeit("memmove", [&](){
+
+            double d[MEMSIZE];
+
+            memmove(d, buf, MEMSIZE*sizeof(double));
+
+    });
+
+    for (auto &x : buf){ // this isnt working p is all 0's evan after loop
+        x = static_cast<double>(rand())/static_cast<double>(RAND_MAX);
+    }
+
+    timeit("memcopy", [&](){
+
+            double d[MEMSIZE];
+
+            memcpy(d, buf, MEMSIZE*sizeof(double));
 
     });
     
-    timeit("memmove", [](){
+    for (auto &x : buf){ // this isnt working p is all 0's evan after loop
+        x = static_cast<double>(rand())/static_cast<double>(RAND_MAX);
+    }
 
-            int p[MEMSIZE] = {0};
-            int d[MEMSIZE];
+    timeit("std::copy", [&](){
 
-            memmove(d, p, MEMSIZE*sizeof(int));
+            double d[MEMSIZE];
 
-    });
-
-    timeit("std::copy", [](){
-
-            int p[MEMSIZE] = {0};
-            int d[MEMSIZE];
-
-            copy(p, &p[MEMSIZE], d);
+            copy(buf, &buf[MEMSIZE], d);
 
     });
 
