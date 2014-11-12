@@ -5,8 +5,14 @@
 #include<algorithm>
 #include<cstdlib>
 
+// the point of these tests is to detirmin if it is beter to use heap memory with the over head of malloc
+// or stack memory with the over head of copying the results. the performance is important because input that is
+// procesed every frame in my opengl program creates and manipulates matricies. with stack memory it mallocs
+// in no time but results need to be copied. with heap it needs to be allocated and freed constantly but the result
+// can use move semantics to only copy pointers.
+
 #define MEMSIZE 16
-#define NUMTESTS 5
+#define NUMTESTS 10
 
 template <typename T, typename... args>
 void timeit(std::string testname, int numt, T f, args&&... a){
@@ -21,11 +27,13 @@ void timeit(std::string testname, int numt, T f, args&&... a){
                   << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()
                   << "ns.\n";
     }
+
+    std::cout << "*****************\n";
 }
 
 // this just grabs memory from the stack and heap to perform the system call and then returns it to the program
 // this way the tests are not affected by system call overhead
-void grabMem(){ 
+void grabMem(){
 
     double tmp[MEMSIZE];
     double *t = new double[MEMSIZE];
@@ -40,13 +48,13 @@ int main(int argc, char **argv){
 
     grabMem();
 
-    double hello; // this is not for testing performance, but testing template stuff
+    double hello; // this is not for testing performance, but testing template and lambda stuff
 
-    timeit("Heap alloc", NUMTESTS, [](double *hello){
+    timeit("Heap alloc", NUMTESTS, [](double *t){
 
             double *p = new double[MEMSIZE];
 
-            *hello = 99;
+            *t = 99;
 
             delete[]p;
 
