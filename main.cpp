@@ -92,6 +92,13 @@ int main(int argc, char **argv){
 
     });
 
+    timeit("Heap alloc again", NUMTESTS, [](){
+
+            double *d = new double[MEMSIZE];
+
+            delete[]d;
+    });
+
     std::cout << hello << '\n';
     return 0;
 }
